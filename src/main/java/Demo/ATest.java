@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ATest implements ABTest {
+    int count =1;
     public ATest(){
         System.out.println("ATest construction");
     }
@@ -14,8 +15,14 @@ public class ATest implements ABTest {
         System.out.println("This is A test");
     }
 
+//    @Override
+//    public boolean iamPicked(RunningContext runningContext) {
+//        return runningContext.getSeed()==1;
+//    }
+
     @Override
-    public boolean iamPicked(RunningContext runningContext) {
-        return runningContext.getSeed()==1;
+    public boolean iamSelected(Object o) {
+        count++;
+        return count%2==0;
     }
 }

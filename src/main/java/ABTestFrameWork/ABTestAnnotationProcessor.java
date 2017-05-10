@@ -18,7 +18,8 @@ import java.util.Set;
  */
 @Component
 public class ABTestAnnotationProcessor implements BeanPostProcessor {
-
+    private Map<Class,Object> interfacetoproxyMap=new HashMap<>();
+    private Map<Class,Set<Object>> interfacetoFieldsMap=new HashMap<>();
     private ConfigurableListableBeanFactory configurableBeanFactory;
     Map<Class,Set<Object>> m =new HashMap<>();
     @Autowired
@@ -43,20 +44,38 @@ public class ABTestAnnotationProcessor implements BeanPostProcessor {
     public Object postProcessBeforeInitialization(Object bean, String beanName)
             throws BeansException {
 
-            for (Class c : bean.getClass().getInterfaces()) {
-                if (c.isAnnotationPresent(TestInterface.class) && !beanName.equals("testCallProxy")) {
-                    if (!m.containsKey(c)) {
-                        m.put(c, new HashSet<>());
+        for (Class c : bean.getClass().getInterfaces()) {
+            if (c.isAnnotationPresent(TestInterface.class)) {
+                Object proxy=TestCallProxy.newInstance(bean);
+                interfacetoproxyMap.put(c,proxy);
+                if(interfacetoFieldsMap.containsKey(c)){
+                    for(Object bean1:interfacetoFieldsMap.get(c)){
+                        for(Field f:bean1.getClass().getDeclaredFields()){
+                            if(f.isAnnotationPresent(TestInterface.class)){
+                                f.setAccessible(true);
+                                try {
+                                    f.set(bean1,f.getType().cast(proxy));
+                                } catch (IllegalAccessException e) {
+                                    e.printStackTrace();
+                                }
+                                f.setAccessible(false);
+
+                            }
+                        }
                     }
-                    m.get(c).add(bean);
                 }
             }
+        }
 
         for(Field f:bean.getClass().getDeclaredFields()){
             if(f.isAnnotationPresent(TestInterface.class)){
                 f.setAccessible(true);
                 try {
-                    f.set(bean,configurableBeanFactory.getBean(TestCallProxy.class,m,f.getType()));
+                    if(!interfacetoFieldsMap.containsKey(f.getType()))
+                        interfacetoFieldsMap.put(f.getType(),new HashSet<>());
+                    interfacetoFieldsMap.get(f.getType()).add(bean);
+                    if(interfacetoproxyMap.containsKey(f.getType()))
+                        f.set(bean,f.getType().cast(interfacetoproxyMap.get(f.getType())));
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }

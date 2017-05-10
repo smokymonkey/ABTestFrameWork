@@ -1,5 +1,6 @@
 package Demo;
 
+import ABTestFrameWork.Selector;
 import ABTestFrameWork.TestInterface;
 import ABTestFrameWork.TestMethod;
 
@@ -8,8 +9,8 @@ import ABTestFrameWork.TestMethod;
  *
  */
 @TestInterface
-public interface ABTest {
+public interface ABTest extends Selector{
     @TestMethod
     void test();
-    boolean iamPicked(RunningContext runningContext);
+//    boolean iamPicked(RunningContext runningContext);
 }
